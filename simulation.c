@@ -3,8 +3,6 @@
 #include<time.h>
 #include<string.h>
 
-//FIla pra decolagem
-//Outra fila para pousos
 
 struct decolagem{
   char codeVoos[6];
@@ -16,6 +14,7 @@ struct decolagem{
   int hora;
   int minutos;
   struct decolagem* prox;
+  
 };
 typedef struct decolagem Decolagem;
 
@@ -63,7 +62,6 @@ int gera_voos_comb_prior();
 void mostra_horas();
 int *ListaPista();
 int cronos();
-//Fazer a fila de pedidos depois ir adicionando na lista de eventos de acordo com a prioridade;
 
 int main(int argc, char const *argv[]) {
   char *codeVoos[] = {"VG3001","JJ4404", "LN7001", "TG1501", "GL7602", "TT1010",
@@ -77,6 +75,7 @@ int main(int argc, char const *argv[]) {
                        "AZ1065", "LF0978", "RL7867", "TT4502", "GL7645", "LF0932",
                        "JJ4434", "TG1510", "TT1020", "AZ1098", "BA2312", "VG3030",
                        "BA2304", "KL5609","KL5610", "KL5611"};
+
   int UnTempo = 5;
   int hora = 8, minutos=0;
   int NVoos;
@@ -86,16 +85,15 @@ int main(int argc, char const *argv[]) {
   int prioridade_indice;
   int opcaoVoo;
   char status;
-  //combustivel
   int combustivel;
   int num_codeVoo;
   int conta_comb = 0;
   int lista_vazia1 = 0;
   int lista_vazia2 = 0;
   int pista = 0;
-
-
   int i = 0, j = 0;
+
+
   Fila *f = cria_dec();
   Fila *f2 = cria_pou();
   gera_aleaorios(&NVoos, &NAproximacoes, &NDecolagens);
@@ -103,16 +101,14 @@ int main(int argc, char const *argv[]) {
 
   if(prioridade_indice == 0){
     prioridade = 'A';
-  }
-  else{
-    prioridade = 'D';
-  }
-  if(opcaoVoo == 0){
     status = 'P';
   }
   else{
+    prioridade = 'D';
     status = 'D';
   }
+
+  pista = 1 + (rand() % 2);
 
   printf("---------------------------------------------------------------------\n");
   printf("Aeroporto de Brasília\n");
@@ -128,34 +124,8 @@ int main(int argc, char const *argv[]) {
   printf("Ndecolagens: %d\n", NDecolagens);
   printf("---------------------------------------------------------------------\n");
 
-  while(i < NDecolagens){
-    gera_voos_comb_prior(&num_codeVoo, &prioridade_indice, &combustivel, &opcaoVoo);
-    if(lista_vazia1 != 0){
-      //cronos(&hora, &minutos, 0);
-      minutos += 2*UnTempo;
-      //printf("%d\n", minutos);
-      if(minutos >= 60){
-        minutos = minutos - 60;
-        hora++;
-      }
-      pista = 1 + (rand() % 3);
-      //printf("%d\n", hora);
-      insere_dec(f, codeVoos[num_codeVoo], prioridade, status, combustivel, pista, hora, minutos, pista, &conta_comb);
-    }
-    else{
-      minutos += 2*UnTempo;
-      //printf("%d\n", minutos);
-      if(minutos >= 60){
-        minutos = minutos - 60;
-        hora++;
-      }
-      pista = 1 + (rand() % 3);
-      //printf("%d\n", hora);
-      insere_dec(f, codeVoos[num_codeVoo], prioridade, status, combustivel, hora, minutos, pista, &conta_comb);
-
-    }
-    lista_vazia1++;
-    i++;
+  if(prioridade == 'A' && combustivel == 0){
+    insere_pou(f2, codeVoos[num_codeVoo], prioridade, status, combustivel, hora, minutos, pista, &conta_comb);
   }
 
   while(j < NAproximacoes){
@@ -187,12 +157,41 @@ int main(int argc, char const *argv[]) {
     lista_vazia2++;
     j++;
   }
+  while(i < NDecolagens){
+    gera_voos_comb_prior(&num_codeVoo, &prioridade_indice, &combustivel, &opcaoVoo);
+    if(lista_vazia1 != 0){
+      //cronos(&hora, &minutos, 0);
+      minutos += 2*UnTempo;
+      //printf("%d\n", minutos);
+      if(minutos >= 60){
+        minutos = minutos - 60;
+        hora++;
+      }
+      pista = 1 + (rand() % 3);
+      //printf("%d\n", hora);
+      insere_dec(f, codeVoos[num_codeVoo], prioridade, status, combustivel, hora, minutos, pista, &conta_comb);
+    }
+    else{
+      minutos += 2*UnTempo;
+      //printf("%d\n", minutos);
+      if(minutos >= 60){
+        minutos = minutos - 60;
+        hora++;
+      }
+      pista = 1 + (rand() % 3);
+      //printf("%d\n", hora);
+      insere_dec(f, codeVoos[num_codeVoo], prioridade, status, combustivel, hora, minutos, pista, &conta_comb);
+
+    }
+    lista_vazia1++;
+    i++;
+  }
+
+  insere_pou(f2, codeVoos[num_codeVoo], prioridade, status, combustivel, hora, minutos, pista, &conta_comb);
 
   printf("Listagem de eventos:\n\n");
-  imprime_dec(f);
   imprime_pou(f2);
-  libera_Dec(f);
-  libera_pou(f2);
+  imprime_dec(f);
 
   return 0;
 }
@@ -213,7 +212,7 @@ void mostra_horas(int hours, int minutes){
 }
 
 /******************************************************************************/
-//caso não de certo olhar o algoritmo Fisher–Yates shuffle
+
 int gera_aleaorios(int *NVoos, int *NAproximacoes, int *NDecolagens,
                    int *combustivel){
   srand( (unsigned)time(NULL) );
@@ -289,8 +288,6 @@ char *retira_dec(Fila* f){
     exit(1);
   }
   strcpy(codeVoos,f->ini_d->codeVoos);
-  // combustivel = f->ini_d->combustivel;
-  // prioridade = f->ini_d->prioridade;
   f->ini_d = ret_ini_dec(f->ini_d);
   if(f->ini_d == NULL){
     f->fim_d = NULL;
@@ -320,6 +317,7 @@ void imprime_dec(Fila* f, int *pista){
     printf("Status: [aeronave decolou]\n");
     mostra_horas(q->hora,q->minutos);
     printf("Número da pista: %d\n", q->pista);
+    printf("combustivel: %d\n",q->combustivel);
     printf("\n");
   }
 }
@@ -376,8 +374,6 @@ char *retira_pou(Fila* f){
     exit(1);
   }
   strcpy(codeVoos,f->ini_p->codeVoos);
-  // combustivel = f->ini_d->combustivel;
-  // prioridade = f->ini_d->prioridade;
   f->ini_p = ret_ini_pou(f->ini_p);
   if(f->ini_p == NULL){
     f->fim_p = NULL;
@@ -406,6 +402,7 @@ void imprime_pou(Fila* f, int *pista){
     printf("Status: [aeronave pousou]\n");
     mostra_horas(q->hora,q->minutos);
     printf("Número da pista: %d\n", q->pista);
+    printf("combustivel: %d\n",q->combustivel);
     printf("\n");
   }
 }
